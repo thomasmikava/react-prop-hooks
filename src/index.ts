@@ -7,7 +7,7 @@ export interface SetState<T> {
   (fn: (currentValue: T) => T): void;
 }
 
-export type AdditionaFn<T, Args extends readonly any[]> = (
+export type PropHookReducer<T, Args extends readonly any[]> = (
   currentState: T,
   ...args: Args
 ) => T;
@@ -18,15 +18,13 @@ type UnWrap<Fn> = Fn extends (currentState: infer T, ...args: infer R) => void
 
 interface RawSetProp<
   T,
-  AdditionalFunctions extends Record<string, AdditionaFn<T, any>> = {},
+  Reducers extends Record<string, PropHookReducer<T, any>> = {},
   ForbiddenKeys extends string | number | symbol = never
 > {
-  <
-    K extends Exclude<KeysOfUnion<T> | keyof AdditionalFunctions, ForbiddenKeys>
-  >(
+  <K extends Exclude<KeysOfUnion<T> | keyof Reducers, ForbiddenKeys>>(
     key: K
-  ): K extends keyof AdditionalFunctions
-    ? UnWrap<AdditionalFunctions[K]>
+  ): K extends keyof Reducers
+    ? UnWrap<Reducers[K]>
     : SetState<GetValueType<T, K>>;
 }
 
@@ -47,10 +45,9 @@ type GetValueType<
 
 export interface SetProp<
   T,
-  AdditionalFunctions extends Record<string, AdditionaFn<T, any>> = {},
+  Reducers extends Record<string, PropHookReducer<T, any>> = {},
   ForbiddenKeys extends string | number | symbol = never
-> extends CustomFns<T>,
-    RawSetProp<T, AdditionalFunctions, ForbiddenKeys> {}
+> extends CustomFns<T>, RawSetProp<T, Reducers, ForbiddenKeys> {}
 
 type CustomFns<T> = AnyFns<T> & ArrayFns<T>;
 type Unsubscribe = () => void;
@@ -121,7 +118,7 @@ interface UsePropFns {
   ): SetProp<T>;
   <
     T extends Record<any, any> | undefined | null,
-    AdditionaFns extends Record<string, AdditionaFn<T, any>>
+    AdditionaFns extends Record<string, PropHookReducer<T, any>>
   >(
     setState: SetState<T>,
     additionalFns: AdditionaFns
@@ -132,7 +129,7 @@ interface UsePropFns {
   ): SetProp<T, Record<any, any>, K>;
   <
     T extends Record<any, any> | undefined | null,
-    AdditionaFns extends Record<string, AdditionaFn<T, any>>,
+    AdditionaFns extends Record<string, PropHookReducer<T, any>>,
     K extends KeysOfUnion<T> | keyof AdditionaFns
   >(
     setState: SetState<T>,
@@ -151,7 +148,7 @@ interface UsePropFnsWithValue {
   ): [T, SetProp<T>, RefObj<T>];
   <
     T extends Record<any, any> | undefined | null,
-    AdditionaFns extends Record<string, AdditionaFn<T, any>>
+    AdditionaFns extends Record<string, PropHookReducer<T, any>>
   >(
     defaultValue: React.SetStateAction<T>,
     additionalFns: AdditionaFns
@@ -162,7 +159,7 @@ interface UsePropFnsWithValue {
   ): [T, SetProp<T, Record<any, any>, K>, RefObj<T>];
   <
     T extends Record<any, any> | undefined | null,
-    AdditionaFns extends Record<string, AdditionaFn<T, any>>,
+    AdditionaFns extends Record<string, PropHookReducer<T, any>>,
     K extends KeysOfUnion<T> | keyof AdditionaFns
   >(
     defaultValue: React.SetStateAction<T>,
@@ -293,12 +290,15 @@ const getModifiedSetState = ({
   getSetState: getRawSetState,
   getSetPropHelper,
 }: HelperArgs) => {
-  return (valueOrFn: Parameters<ReturnType<typeof getRawSetState>>[0], meta?: Meta) => {
+  return (
+    valueOrFn: Parameters<ReturnType<typeof getRawSetState>>[0],
+    meta?: Meta
+  ) => {
     const getNewValue = toDispatchable(valueOrFn);
     const rawSetState = getRawSetState() as any;
     const su = new Subscription();
     let isCalled = false;
-    rawSetState((prev) => {
+    rawSetState(prev => {
       isCalled = true;
       const newValue = getNewValue(prev);
       if (prev === newValue) return newValue;

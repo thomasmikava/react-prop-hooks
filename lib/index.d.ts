@@ -3,17 +3,17 @@ export interface SetState<T> {
     (newValue: T): void;
     (fn: (currentValue: T) => T): void;
 }
-export declare type AdditionaFn<T, Args extends readonly any[]> = (currentState: T, ...args: Args) => T;
+export declare type PropHookReducer<T, Args extends readonly any[]> = (currentState: T, ...args: Args) => T;
 declare type UnWrap<Fn> = Fn extends (currentState: infer T, ...args: infer R) => void ? (...args: R) => void : never;
-interface RawSetProp<T, AdditionalFunctions extends Record<string, AdditionaFn<T, any>> = {}, ForbiddenKeys extends string | number | symbol = never> {
-    <K extends Exclude<KeysOfUnion<T> | keyof AdditionalFunctions, ForbiddenKeys>>(key: K): K extends keyof AdditionalFunctions ? UnWrap<AdditionalFunctions[K]> : SetState<GetValueType<T, K>>;
+interface RawSetProp<T, Reducers extends Record<string, PropHookReducer<T, any>> = {}, ForbiddenKeys extends string | number | symbol = never> {
+    <K extends Exclude<KeysOfUnion<T> | keyof Reducers, ForbiddenKeys>>(key: K): K extends keyof Reducers ? UnWrap<Reducers[K]> : SetState<GetValueType<T, K>>;
 }
 declare type GetValueType<T, K extends string | number | symbol> = T extends readonly any[] ? K extends keyof T ? T[K] : never : (T extends {
     readonly [key in K]: any;
 } ? T[K] : T extends {
     readonly [key in K]?: any;
 } ? T[K] | undefined : never) | (K extends keyof NonNullable<T> ? never : undefined);
-export interface SetProp<T, AdditionalFunctions extends Record<string, AdditionaFn<T, any>> = {}, ForbiddenKeys extends string | number | symbol = never> extends CustomFns<T>, RawSetProp<T, AdditionalFunctions, ForbiddenKeys> {
+export interface SetProp<T, Reducers extends Record<string, PropHookReducer<T, any>> = {}, ForbiddenKeys extends string | number | symbol = never> extends CustomFns<T>, RawSetProp<T, Reducers, ForbiddenKeys> {
 }
 declare type CustomFns<T> = AnyFns<T> & ArrayFns<T>;
 declare type Unsubscribe = () => void;
@@ -52,18 +52,18 @@ interface DeleteByKeyFn<Val> {
 }
 interface UsePropFns {
     <T extends Record<any, any> | undefined | null>(setState: SetState<T>): SetProp<T>;
-    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, AdditionaFn<T, any>>>(setState: SetState<T>, additionalFns: AdditionaFns): SetProp<T, AdditionaFns>;
+    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, PropHookReducer<T, any>>>(setState: SetState<T>, additionalFns: AdditionaFns): SetProp<T, AdditionaFns>;
     <T extends Record<any, any> | undefined | null, K extends KeysOfUnion<T>>(setState: SetState<T>, forbiddenKeys: readonly K[]): SetProp<T, Record<any, any>, K>;
-    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, AdditionaFn<T, any>>, K extends KeysOfUnion<T> | keyof AdditionaFns>(setState: SetState<T>, additionalFns: AdditionaFns, forbiddenKeys: readonly K[]): SetProp<T, AdditionaFns, K>;
+    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, PropHookReducer<T, any>>, K extends KeysOfUnion<T> | keyof AdditionaFns>(setState: SetState<T>, additionalFns: AdditionaFns, forbiddenKeys: readonly K[]): SetProp<T, AdditionaFns, K>;
 }
 interface RefObj<T> {
     readonly current: T;
 }
 interface UsePropFnsWithValue {
     <T extends Record<any, any> | undefined | null>(defaultValue: React.SetStateAction<T>): [T, SetProp<T>, RefObj<T>];
-    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, AdditionaFn<T, any>>>(defaultValue: React.SetStateAction<T>, additionalFns: AdditionaFns): [T, SetProp<T, AdditionaFns>, RefObj<T>];
+    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, PropHookReducer<T, any>>>(defaultValue: React.SetStateAction<T>, additionalFns: AdditionaFns): [T, SetProp<T, AdditionaFns>, RefObj<T>];
     <T extends Record<any, any> | undefined | null, K extends KeysOfUnion<T>>(defaultValue: React.SetStateAction<T>, forbiddenKeys: readonly K[]): [T, SetProp<T, Record<any, any>, K>, RefObj<T>];
-    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, AdditionaFn<T, any>>, K extends KeysOfUnion<T> | keyof AdditionaFns>(defaultValue: React.SetStateAction<T>, additionalFns: AdditionaFns, forbiddenKeys: readonly K[]): [T, SetProp<T, AdditionaFns, K>, RefObj<T>];
+    <T extends Record<any, any> | undefined | null, AdditionaFns extends Record<string, PropHookReducer<T, any>>, K extends KeysOfUnion<T> | keyof AdditionaFns>(defaultValue: React.SetStateAction<T>, additionalFns: AdditionaFns, forbiddenKeys: readonly K[]): [T, SetProp<T, AdditionaFns, K>, RefObj<T>];
 }
 export declare const getSetProps: UsePropFns;
 export declare const useSetProps: UsePropFns;
