@@ -26,10 +26,16 @@ interface ArrayFns<T> {
         byIndex: (index: number) => () => void;
     };
 }
+declare type PropChangeAsArray<T> = <K extends number>(key: K) => (fn: PropChangeFn<T, GetValueType<T, K> | undefined, K>) => Unsubscribe;
+declare type PropChangeAsObject<T> = <K extends KeysOfUnion<T>>(key: K) => (fn: PropChangeFn<T, GetValueType<T, K>, K>) => Unsubscribe;
 interface SubscribeToFns<T> {
     change: (fn: ChangeFn<T>) => Unsubscribe;
-    propChange: T extends null | undefined ? never : T extends readonly any[] ? <K extends number>(key: K) => (fn: PropChangeFn<T, GetValueType<T, K> | undefined, K>) => Unsubscribe : <K extends KeysOfUnion<T>>(key: K) => (fn: PropChangeFn<T, GetValueType<T, K>, K>) => Unsubscribe;
-    anyPropChange: T extends null | undefined ? never : T extends readonly any[] ? (fn: AnyPropChangeFn<T, GetValueType<T, number> | undefined, number>) => Unsubscribe : (fn: AnyPropChangeFn<T, GetValueType<T, KeysOfUnion<T>>, KeysOfUnion<T>>) => Unsubscribe;
+    propChange: {
+        a: NonNullable<T>;
+    } extends {
+        a: readonly any[];
+    } ? PropChangeAsArray<NonNullable<T>> : PropChangeAsObject<NonNullable<T>>;
+    anyPropChange: (fn: AnyPropChangeFn<T, GetValueType<T, KeysOfUnion<T>>, KeysOfUnion<T>>) => Unsubscribe;
 }
 interface AnyFns<T> {
     subscribeTo: SubscribeToFns<T> & {
